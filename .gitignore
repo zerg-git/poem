@@ -1,6 +1,9 @@
 # 数据集
 chinese-poetry-master
 
+#数据库
+poems.db
+
 # Go
 backend/bin
 backend/pkg
@@ -24,6 +27,7 @@ frontend/.vite
 *.swp
 *.swo
 *~
+.trae
 
 # OS
 .DS_Store

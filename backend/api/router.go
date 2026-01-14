@@ -4,6 +4,7 @@ import (
 	"poem/backend/api/handlers"
 	"poem/backend/api/middleware"
 	"poem/backend/services"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,6 +39,21 @@ func SetupRouter(poetryService *services.PoetryService) *gin.Engine {
 		// 搜索
 		v1.GET("/search", poetryHandler.Search)
 	}
+
+	// 静态文件服务 - 前端构建产物
+	router.Static("/assets", "../frontend/dist/assets")
+	router.StaticFile("/favicon.ico", "../frontend/dist/favicon.ico")
+
+	// SPA 前端路由支持
+	router.NoRoute(func(c *gin.Context) {
+		// 如果是 API 请求但未匹配到路由，返回 404
+		if strings.HasPrefix(c.Request.URL.Path, "/api") {
+			c.JSON(404, gin.H{"code": 404, "message": "Not Found"})
+			return
+		}
+		// 其他请求返回前端入口文件
+		c.File("../frontend/dist/index.html")
+	})
 
 	// 健康检查
 	router.GET("/health", func(c *gin.Context) {

@@ -9,6 +9,7 @@
         <div class="nav-links">
           <router-link to="/" class="nav-link">首页</router-link>
           <router-link to="/catalog" class="nav-link">目录</router-link>
+          <router-link to="/authors" class="nav-link">诗人</router-link>
           <router-link to="/search" class="nav-link">搜索</router-link>
         </div>
       </div>

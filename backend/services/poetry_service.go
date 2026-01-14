@@ -3,6 +3,7 @@ package services
 import (
 	"poem/backend/models"
 	"poem/backend/repository"
+	"strings"
 )
 
 // PoetryService 诗词服务
@@ -65,7 +66,31 @@ func (s *PoetryService) GetAuthors(page, pageSize int, dynasty string) (models.A
 		pageSize = 20
 	}
 
-	return s.repo.GetAuthors(page, pageSize, dynasty)
+	// Map API dynasty code to DB Chinese value
+	dbDynasty := mapDynasty(dynasty)
+
+	return s.repo.GetAuthors(page, pageSize, dbDynasty)
+}
+
+func mapDynasty(dynasty string) string {
+	// Normalize to lower case
+	key := strings.ToLower(dynasty)
+
+	mapping := map[string]string{
+		"tang":    "唐",
+		"song":    "宋",
+		"yuan":    "元",
+		"ming":    "明",
+		"qing":    "清",
+		"han":     "汉/魏", // Mapping han to 汉/魏 for Cao Cao etc.
+		"wei-jin": "魏晋",
+		"pre-qin": "先秦",
+		"wudai":   "五代",
+	}
+	if val, ok := mapping[key]; ok {
+		return val
+	}
+	return dynasty
 }
 
 // GetAuthorByName 获取作者详情

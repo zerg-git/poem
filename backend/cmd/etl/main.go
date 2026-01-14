@@ -289,6 +289,23 @@ func processDir(db *gorm.DB, dirPath string, categoryName string, defaultDynasty
 	}
 }
 
+func normalizeDynasty(d string) string {
+	d = strings.TrimSpace(d)
+	switch strings.ToLower(d) {
+	case "tang":
+		return "唐"
+	case "song":
+		return "宋"
+	case "yuan":
+		return "元"
+	case "ming":
+		return "明"
+	case "qing":
+		return "清"
+	}
+	return d
+}
+
 func processFile(db *gorm.DB, filePath string, catID uint, defaultDynasty string) {
 	fmt.Printf("Processing file %s... ", filepath.Base(filePath))
 	content, err := os.ReadFile(filePath)
@@ -327,11 +344,18 @@ func processFile(db *gorm.DB, filePath string, catID uint, defaultDynasty string
 			dynasty := rp.Dynasty
 			if dynasty == "" {
 				dynasty = defaultDynasty
+			} else {
+				dynasty = normalizeDynasty(dynasty)
 			}
 
 			authorName := rp.Author
 			if authorName == "" {
-				authorName = "Unknown"
+				// Special case for Cao Cao if category is caocao
+				if catID == getCategoryID("caocao") {
+					authorName = "曹操"
+				} else {
+					authorName = "Unknown"
+				}
 			}
 
 			// Use tx here to ensure we are inside the transaction
