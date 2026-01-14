@@ -96,9 +96,25 @@ func main() {
 	}
 
 	// 2. 确定数据目录
-	rootDir := "d:\\demo\\poem\\chinese-poetry"
-	if _, err := os.Stat(rootDir); err != nil {
-		rootDir = "../../../chinese-poetry"
+	possiblePaths := []string{
+		"d:\\demo\\poem\\chinese-poetry",
+		"d:\\demo\\poem\\chinese-poetry-master",
+		"../../../chinese-poetry",
+		"../../../chinese-poetry-master",
+		"chinese-poetry",
+		"chinese-poetry-master",
+	}
+
+	rootDir := ""
+	for _, p := range possiblePaths {
+		if _, err := os.Stat(p); err == nil {
+			rootDir = p
+			break
+		}
+	}
+
+	if rootDir == "" {
+		log.Fatal("Could not find chinese-poetry data directory")
 	}
 
 	fmt.Printf("Data root: %s\n", rootDir)
