@@ -14,10 +14,14 @@ func main() {
 
 	log.Printf("启动中国古诗词API服务...")
 	log.Printf("数据路径: %s", cfg.DataPath)
+	log.Printf("数据库路径: %s", cfg.DBPath)
 	log.Printf("运行环境: %s", cfg.Env)
 
 	// 初始化Repository层
-	poetryRepo := repository.NewPoetryRepository(cfg.DataPath)
+	poetryRepo, err := repository.NewPoetryRepository(cfg.DBPath)
+	if err != nil {
+		log.Fatal("初始化数据库失败:", err)
+	}
 
 	// 初始化Service层
 	poetryService := services.NewPoetryService(poetryRepo)

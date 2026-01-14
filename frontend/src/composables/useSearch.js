@@ -19,7 +19,7 @@ export function useSearch() {
     try {
       const response = await poetryAPI.search(query, params)
       if (response.data.success) {
-        results.value = response.data.data.poems
+        results.value = response.data.data.works
         total.value = response.data.data.total
         return response.data.data
       }

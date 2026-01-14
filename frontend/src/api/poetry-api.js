@@ -31,7 +31,13 @@ api.interceptors.response.use(
 export const poetryAPI = {
   // 获取诗词列表
   getPoems(params = {}) {
-    return api.get('/poems', { params })
+    // 映射前端参数到后端
+    const backendParams = {
+      page: params.page,
+      page_size: params.pageSize,
+      category: params.category
+    }
+    return api.get('/poems', { params: backendParams })
   },
 
   // 获取单首诗词
@@ -46,10 +52,16 @@ export const poetryAPI = {
 
   // 搜索
   search(query, params = {}) {
-    return api.get('/search', { params: { q: query, ...params } })
+    return api.get('/search', { 
+      params: { 
+        q: query, 
+        page: params.page,
+        page_size: params.pageSize 
+      } 
+    })
   },
 
-  // 获取朝代列表
+  // 获取朝代列表 (Legacy)
   getDynasties() {
     return api.get('/dynasties')
   },
@@ -61,7 +73,13 @@ export const poetryAPI = {
 
   // 获取作者列表
   getAuthors(params = {}) {
-    return api.get('/authors', { params })
+    return api.get('/authors', { 
+      params: {
+        page: params.page,
+        page_size: params.pageSize,
+        dynasty: params.dynasty
+      }
+    })
   },
 
   // 获取作者详情
@@ -71,7 +89,12 @@ export const poetryAPI = {
 
   // 获取作者的诗词
   getAuthorPoems(name, params = {}) {
-    return api.get(`/authors/${name}/poems`, { params })
+    return api.get(`/authors/${name}/poems`, { 
+      params: {
+        page: params.page,
+        page_size: params.pageSize
+      } 
+    })
   }
 }
 

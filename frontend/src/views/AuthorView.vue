@@ -7,8 +7,8 @@
         <div class="author-header paper-card">
           <h1 class="author-name">{{ name }}</h1>
           <div v-if="author" class="author-meta">
-            <p class="author-dynasty">{{ author.dynasty }}</p>
-            <p class="author-poem-count">收录 {{ author.poem_count }} 首诗词</p>
+            <p class="author-dynasty">{{ formatDynasty(author.dynasty) }}</p>
+            <p v-if="author.biography" class="author-bio">{{ author.biography }}</p>
           </div>
         </div>
 
@@ -61,13 +61,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { poetryAPI } from '@/api/poetry-api'
+import { formatDynasty } from '@/utils/common'
 import PoemCard from '@/components/PoemCard.vue'
 
 const route = useRoute()
-const name = ref(route.params.name)
+// use computed for reactive name from route
+const name = computed(() => route.params.name)
 const author = ref(null)
 const poems = ref([])
 const loading = ref(false)
@@ -104,10 +106,6 @@ const displayedPages = computed(() => {
   return pages
 })
 
-onMounted(async () => {
-  await loadData()
-})
-
 const loadData = async () => {
   loading.value = true
   try {
@@ -125,10 +123,10 @@ const loadData = async () => {
     // 加载诗词列表
     const poemsRes = await poetryAPI.getAuthorPoems(name.value, {
       page: currentPage.value,
-      page_size: pageSize.value
+      pageSize: pageSize.value
     })
     if (poemsRes.data.success) {
-      poems.value = poemsRes.data.data.poems
+      poems.value = poemsRes.data.data.works
       total.value = poemsRes.data.data.total
     }
   } catch (e) {
@@ -137,6 +135,25 @@ const loadData = async () => {
     loading.value = false
   }
 }
+
+const initData = async () => {
+  author.value = null
+  poems.value = []
+  currentPage.value = 1
+  total.value = 0
+  await loadData()
+}
+
+onMounted(initData)
+
+watch(
+  () => route.params.name,
+  (newName) => {
+    if (newName) {
+      initData()
+    }
+  }
+)
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
@@ -172,8 +189,12 @@ const goToPage = (page) => {
   margin-bottom: 0.5rem;
 }
 
-.author-poem-count {
+.author-bio {
   color: #666;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-top: 1rem;
+  text-align: left;
 }
 
 .poems-section {

@@ -16,7 +16,7 @@ func NewPoetryService(repo *repository.PoetryRepository) *PoetryService {
 }
 
 // GetPoems 获取诗词列表
-func (s *PoetryService) GetPoems(page, pageSize int, category string) (models.PoemCollection, error) {
+func (s *PoetryService) GetPoems(page, pageSize int, categoryName string) (models.PoemCollection, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -24,16 +24,16 @@ func (s *PoetryService) GetPoems(page, pageSize int, category string) (models.Po
 		pageSize = 20
 	}
 
-	return s.repo.GetPoems(page, pageSize, category)
+	return s.repo.GetPoems(page, pageSize, categoryName)
 }
 
 // GetPoemByID 获取单首诗词
-func (s *PoetryService) GetPoemByID(id string) (*models.Poem, error) {
+func (s *PoetryService) GetPoemByID(id string) (*models.Work, error) {
 	return s.repo.GetPoemByID(id)
 }
 
 // GetRandomPoems 获取随机诗词
-func (s *PoetryService) GetRandomPoems(count int, category string) ([]models.Poem, error) {
+func (s *PoetryService) GetRandomPoems(count int, categoryName string) ([]models.Work, error) {
 	if count < 1 {
 		count = 1
 	}
@@ -41,7 +41,7 @@ func (s *PoetryService) GetRandomPoems(count int, category string) ([]models.Poe
 		count = 10
 	}
 
-	return s.repo.GetRandomPoems(count, category)
+	return s.repo.GetRandomPoems(count, categoryName)
 }
 
 // GetPoemsByAuthor 获取作者的诗词
@@ -85,14 +85,11 @@ func (s *PoetryService) Search(query string, page, pageSize int) (models.SearchR
 	return s.repo.Search(query, page, pageSize)
 }
 
-// GetDynasties 获取朝代列表
-func (s *PoetryService) GetDynasties() []models.Dynasty {
-	loader := repository.NewJSONLoader("")
-	return loader.GetDynasties()
-}
-
 // GetCategories 获取分类列表
 func (s *PoetryService) GetCategories() []models.Category {
-	loader := repository.NewJSONLoader("")
-	return loader.GetCategories()
+	categories, err := s.repo.GetCategories()
+	if err != nil {
+		return []models.Category{}
+	}
+	return categories
 }

@@ -306,8 +306,11 @@ GET /authors/:id
 
 **请求**
 ```
-GET /authors/:id/poems
+GET /authors/:name/poems
 ```
+
+**路径参数**
+- `name`: 作者姓名
 
 **查询参数**
 
@@ -321,7 +324,13 @@ GET /authors/:id/poems
 {
   "success": true,
   "data": {
-    "poems": [...],
+    "works": [
+        {
+            "id": 1,
+            "title": "...",
+            "content": [...]
+        }
+    ],
     "total": 1200,
     "page": 1,
     "page_size": 20,

@@ -120,9 +120,11 @@ services:
       - "8080:8080"
     volumes:
       - ./chinese-poetry-master:/app/data:ro
+      - ./poems.db:/app/poems.db
     environment:
       - GIN_MODE=release
       - DATA_PATH=/app/data
+      - DB_PATH=/app/poems.db
       - PORT=8080
     networks:
       - poetry-network

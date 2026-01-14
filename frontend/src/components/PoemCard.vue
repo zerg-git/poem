@@ -1,14 +1,14 @@
 <template>
   <div class="card paper-card" @click="handleClick">
     <div class="card-title">{{ poem?.title || '无题' }}</div>
-    <div class="card-subtitle">{{ poem?.author || '佚名' }}</div>
+    <div class="card-subtitle">{{ authorName }}</div>
     <div class="poem-preview">
       <p v-for="(line, index) in previewLines" :key="index" class="poem-line">
         {{ line }}
       </p>
     </div>
     <div class="card-meta">
-      <span class="tag">{{ dynastyName }}</span>
+      <span class="tag">{{ categoryOrDynasty }}</span>
     </div>
   </div>
 </template>
@@ -16,6 +16,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { formatDynasty } from '@/utils/common'
 
 const props = defineProps({
   poem: {
@@ -27,24 +28,40 @@ const props = defineProps({
 const router = useRouter()
 
 const previewLines = computed(() => {
-  return props.poem?.paragraphs?.slice(0, 2) || []
+  // New backend returns 'content' as array of strings
+  return props.poem?.content?.slice(0, 2) || []
 })
 
-const dynastyName = computed(() => {
-  const dynastyMap = {
-    'preqin': '先秦',
-    'tang': '唐诗',
-    'wudai': '五代',
-    'song': '宋词',
-    'yuan': '元曲',
-    'ming': '明代',
-    'qing': '清代',
-    'other': '古诗词'
+const authorName = computed(() => {
+  // Check if author is object (new structure) or string
+  if (props.poem?.author?.name) {
+    return props.poem.author.name
   }
-  return dynastyMap[props.poem?.dynastyID] || '古诗词'
+  return props.poem?.author || '佚名'
+})
+
+const categoryOrDynasty = computed(() => {
+  // Prioritize category display_name if available
+  if (props.poem?.category?.display_name) {
+    return props.poem.category.display_name
+  }
+  
+  // Fallback to author's dynasty
+  if (props.poem?.author?.dynasty) {
+    return formatDynasty(props.poem.author.dynasty)
+  }
+
+  // Fallback to direct dynasty field (legacy/compatibility)
+  if (props.poem?.dynasty) {
+    return formatDynasty(props.poem.dynasty)
+  }
+
+  return '古诗词'
 })
 
 const handleClick = () => {
+  // Use original_id if available (for permalinks), otherwise ID
+  // Actually, let's use the DB ID for consistency now
   if (props.poem?.id) {
     router.push(`/poem/${props.poem.id}`)
   }

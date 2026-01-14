@@ -4,7 +4,7 @@
     <header class="header">
       <div class="container">
         <h1 class="title">中国古诗词</h1>
-        <p class="subtitle">收录诗经、楚辞、唐诗、宋词、元曲等古典诗词</p>
+        <p class="subtitle">收录唐诗、宋词、元曲等海量古典文学作品</p>
       </div>
     </header>
 
@@ -55,30 +55,67 @@ import PoemContent from '@/components/PoemContent.vue'
 const router = useRouter()
 const randomPoem = ref(null)
 const loading = ref(false)
-const categories = ref([])
+const categories = ref([
+  {
+    id: 'quantangshi',
+    name: '全唐诗',
+    description: '全唐诗收录唐诗四万八千九百余首'
+  },
+  {
+    id: 'songci',
+    name: '宋词',
+    description: '全宋词收录宋词二万余首'
+  },
+  {
+    id: 'yuanqu',
+    name: '元曲',
+    description: '元代文学形式，包括散曲和杂剧'
+  },
+  {
+    id: 'sishuwujing',
+    name: '四书五经',
+    description: '儒家经典著作'
+  },
+  {
+    id: 'lunyu',
+    name: '论语',
+    description: '儒家经典'
+  },
+  {
+    id: 'shijing',
+    name: '诗经',
+    description: '中国古代诗歌开端'
+  },
+  {
+    id: 'chuci',
+    name: '楚辞',
+    description: '屈原创作的诗歌总集'
+  },
+  {
+    id: 'shuimotangshi',
+    name: '水墨唐诗',
+    description: '水墨风格唐诗精选'
+  },
+  {
+    id: 'youmengying',
+    name: '幽梦影',
+    description: '清代张潮著'
+  }
+])
 
 onMounted(async () => {
-  await loadCategories()
   await loadRandomPoem()
 })
-
-const loadCategories = async () => {
-  try {
-    const response = await poetryAPI.getCategories()
-    if (response.data.success) {
-      categories.value = response.data.data
-    }
-  } catch (e) {
-    console.error('加载分类失败:', e)
-  }
-}
 
 const loadRandomPoem = async () => {
   loading.value = true
   try {
     const response = await poetryAPI.getRandomPoem(1)
-    if (response.data.success && response.data.data) {
-      const poems = response.data.data.poems || []
+    if (response.data.success) {
+      // 兼容两种返回格式：直接返回数组或在 data.poems 中
+      const data = response.data.data
+      const poems = Array.isArray(data) ? data : (data.poems || [])
+      
       if (poems.length > 0) {
         randomPoem.value = poems[0]
       } else {

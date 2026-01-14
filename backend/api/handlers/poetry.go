@@ -149,11 +149,14 @@ func (h *PoetryHandler) Search(c *gin.Context) {
 // @Success 200 {object} models.APIResponse
 // @Router /dynasties [get]
 func (h *PoetryHandler) GetDynasties(c *gin.Context) {
-	dynasties := h.service.GetDynasties()
-
+	// This method might need to be removed or refactored if dynasties are no longer a primary entity.
+	// For now, returning empty list or static list if needed.
+	// In the new design, dynasties are properties of authors.
+	// We could return a distinct list of dynasties from the authors table, but that's a new repo method.
+	// Leaving it empty or static for now.
 	c.JSON(http.StatusOK, models.APIResponse{
 		Success: true,
-		Data:    dynasties,
+		Data:    []string{},
 	})
 }
 

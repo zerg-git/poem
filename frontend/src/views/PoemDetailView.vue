@@ -16,35 +16,51 @@
           <div class="info-item">
             <span class="info-label">作者：</span>
             <router-link
-              v-if="poem.author"
-              :to="{ name: 'Author', params: { name: poem.author } }"
+              v-if="authorName"
+              :to="{ name: 'Author', params: { name: authorName } }"
               class="info-value author-link"
             >
-              {{ poem.author }}
+              {{ authorName }}
             </router-link>
+            <span v-else class="info-value">佚名</span>
           </div>
           <div v-if="poem.rhythmic" class="info-item">
             <span class="info-label">词牌：</span>
             <span class="info-value">{{ poem.rhythmic }}</span>
           </div>
-          <div v-if="poem.chapter" class="info-item">
-            <span class="info-label">章节：</span>
-            <span class="info-value">{{ poem.chapter }}</span>
-            <span v-if="poem.section" class="info-value">・{{ poem.section }}</span>
+          <div v-if="poem.volume" class="info-item">
+            <span class="info-label">卷：</span>
+            <span class="info-value">{{ poem.volume }}</span>
           </div>
-          <div v-else-if="poem.section" class="info-item">
-            <span class="info-label">分类：</span>
+          <div v-if="poem.section" class="info-item">
+            <span class="info-label">篇章：</span>
             <span class="info-value">{{ poem.section }}</span>
           </div>
-          <div v-if="poem.dynasty" class="info-item">
+          <div v-if="poem.category?.display_name" class="info-item">
+            <span class="info-label">收录：</span>
+            <span class="info-value">{{ poem.category.display_name }}</span>
+          </div>
+          <div v-if="poem.author?.dynasty" class="info-item">
             <span class="info-label">朝代：</span>
-            <span class="info-value">{{ poem.dynasty }}</span>
+            <span class="info-value">{{ formatDynasty(poem.author.dynasty) }}</span>
+          </div>
+        </div>
+
+        <!-- 评论/注解 (新功能) -->
+        <div v-if="poem.comments && poem.comments.length > 0" class="comments-section paper-card">
+          <h3 class="section-title">注解与评析</h3>
+          <div v-for="comment in poem.comments" :key="comment.id" class="comment-item">
+             <div class="comment-meta">
+               <span class="comment-type tag">{{ getCommentType(comment.type) }}</span>
+               <span v-if="comment.commenter" class="commenter">{{ comment.commenter }}</span>
+             </div>
+             <div class="comment-content">{{ comment.content }}</div>
           </div>
         </div>
 
         <!-- 相关诗词 -->
         <div class="related-section">
-          <h3 class="section-title">更多{{ poem.author }}的作品</h3>
+          <h3 class="section-title">更多{{ authorName }}的作品</h3>
           <div v-if="relatedPoems.length > 0" class="grid grid-cols-1 grid-cols-sm-2">
             <PoemCard
               v-for="relatedPoem in relatedPoems"
@@ -65,33 +81,53 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { poetryAPI } from '@/api/poetry-api'
-import { usePoetry } from '@/composables/usePoetry'
+import { formatDynasty } from '@/utils/common'
 import PoemContent from '@/components/PoemContent.vue'
 import PoemCard from '@/components/PoemCard.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { fetchPoemById } = usePoetry()
 
 const poem = ref(null)
 const relatedPoems = ref([])
 const loading = ref(false)
 
-onMounted(async () => {
+const authorName = computed(() => {
+  return poem.value?.author?.name || poem.value?.author
+})
+
+const initData = async () => {
+  // 重置状态
+  poem.value = null
+  relatedPoems.value = []
+  
   await loadPoem()
-  if (poem.value && poem.value.author) {
+  if (authorName.value) {
     await loadRelatedPoems()
   }
-})
+}
+
+onMounted(initData)
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      initData()
+    }
+  }
+)
 
 const loadPoem = async () => {
   loading.value = true
   try {
-    const data = await fetchPoemById(route.params.id)
-    poem.value = data
+    const res = await poetryAPI.getPoemById(route.params.id)
+    if (res.data.success) {
+      poem.value = res.data.data
+    }
   } catch (e) {
     console.error('加载诗词失败:', e)
   } finally {
@@ -101,19 +137,28 @@ const loadPoem = async () => {
 
 const loadRelatedPoems = async () => {
   try {
-    const response = await poetryAPI.getAuthorPoems(poem.value.author, {
+    const response = await poetryAPI.getAuthorPoems(authorName.value, {
       page: 1,
-      page_size: 4
+      pageSize: 4
     })
     if (response.data.success) {
       // 过滤掉当前诗词
-      relatedPoems.value = response.data.data.poems
+      relatedPoems.value = response.data.data.works
         .filter(p => p.id !== poem.value.id)
         .slice(0, 4)
     }
   } catch (e) {
     console.error('加载相关诗词失败:', e)
   }
+}
+
+const getCommentType = (type) => {
+  const map = {
+    'note': '注解',
+    'comment': '评析',
+    'translation': '译文'
+  }
+  return map[type] || type
 }
 
 const goBack = () => {
@@ -161,6 +206,48 @@ const goBack = () => {
 .author-link:hover {
   color: var(--cinnabar);
   text-decoration: underline;
+}
+
+.comments-section {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.comment-item {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px dashed #eee;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-meta {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.commenter {
+  font-weight: bold;
+  color: var(--indigo);
+}
+
+.comment-content {
+  line-height: 1.6;
+  color: #444;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: #eee;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #666;
 }
 
 .related-section {

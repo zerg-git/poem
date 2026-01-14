@@ -75,13 +75,16 @@ docker-compose up -d
 
 ```
 poem/
-├── chinese-poetry-master/    # 数据集（只读）
-├── backend/                  # Go后端
-│   ├── api/                  # API层
-│   ├── models/               # 数据模型
-│   ├── services/             # 业务逻辑
-│   └── repository/           # 数据访问层
-├── frontend/                 # Vue.js前端
+├── poems.db                    # SQLite数据库 (ETL生成)
+├── chinese-poetry-master/      # 数据集（源文件）
+├── backend/                    # Go后端
+│   ├── cmd/                    # 命令行工具
+│   │   └── etl/                # ETL数据转换工具
+│   ├── api/                    # API层
+│   ├── models/                 # 数据模型
+│   ├── services/               # 业务逻辑
+│   └── repository/             # 数据访问层
+├── frontend/                   # Vue.js前端
 │   └── src/
 │       ├── views/            # 页面组件
 │       ├── components/       # 可复用组件

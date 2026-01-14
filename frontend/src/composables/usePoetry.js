@@ -14,7 +14,7 @@ export function usePoetry() {
     try {
       const response = await poetryAPI.getPoems(params)
       if (response.data.success) {
-        poems.value = response.data.data.poems
+        poems.value = response.data.data.works
         return response.data.data
       }
       throw new Error(response.data.error || '获取诗词列表失败')

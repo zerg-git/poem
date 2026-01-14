@@ -13,13 +13,67 @@
           全部
         </button>
         <button
-          v-for="cat in categories"
-          :key="cat.id"
           class="filter-btn"
-          :class="{ active: selectedCategory === cat.id }"
-          @click="selectCategory(cat.id)"
+          :class="{ active: selectedCategory === 'quantangshi' }"
+          @click="selectCategory('quantangshi')"
         >
-          {{ cat.name }}
+          全唐诗
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'songci' }"
+          @click="selectCategory('songci')"
+        >
+          宋词
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'yuanqu' }"
+          @click="selectCategory('yuanqu')"
+        >
+          元曲
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'sishuwujing' }"
+          @click="selectCategory('sishuwujing')"
+        >
+          四书五经
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'youmengying' }"
+          @click="selectCategory('youmengying')"
+        >
+          幽梦影
+        </button>
+         <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'shijing' }"
+          @click="selectCategory('shijing')"
+        >
+          诗经
+        </button>
+         <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'chuci' }"
+          @click="selectCategory('chuci')"
+        >
+          楚辞
+        </button>
+         <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'lunyu' }"
+          @click="selectCategory('lunyu')"
+        >
+          论语
+        </button>
+         <button
+          class="filter-btn"
+          :class="{ active: selectedCategory === 'shuimotangshi' }"
+          @click="selectCategory('shuimotangshi')"
+        >
+          水墨唐诗
         </button>
       </div>
 
@@ -69,14 +123,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { poetryAPI } from '@/api/poetry-api'
 import PoemCard from '@/components/PoemCard.vue'
 
 const route = useRoute()
 const poems = ref([])
-const categories = ref([])
 const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(12)
@@ -112,57 +165,26 @@ const displayedPages = computed(() => {
   return pages
 })
 
-onMounted(async () => {
-  await loadCategories()
-
-  // 从路由查询参数获取分类
-  if (route.query.category) {
-    selectedCategory.value = route.query.category
-  }
-
-  await loadPoems()
-})
-
-watch(() => route.query.category, async (newCategory) => {
-  selectedCategory.value = newCategory
-  currentPage.value = 1
-  await loadPoems()
-})
-
-const loadCategories = async () => {
-  try {
-    const response = await poetryAPI.getCategories()
-    if (response.data.success) {
-      categories.value = response.data.data
-    }
-  } catch (e) {
-    console.error('加载分类失败:', e)
-  }
-}
-
-const loadPoems = async () => {
+const fetchPoems = async () => {
   loading.value = true
   try {
     const params = {
       page: currentPage.value,
-      page_size: pageSize.value
+      pageSize: pageSize.value
     }
-
-    // 根据选择的分类映射到正确的category参数
+    
+    // 如果选择了分类，传递 category 参数 (现在是 category name)
     if (selectedCategory.value) {
-      const category = categories.value.find(c => c.id === selectedCategory.value)
-      if (category) {
-        params.category = category.path
-      }
+      params.category = selectedCategory.value
     }
 
-    const response = await poetryAPI.getPoems(params)
-    if (response.data.success) {
-      poems.value = response.data.data.poems
-      total.value = response.data.data.total
+    const res = await poetryAPI.getPoems(params)
+    if (res.data && res.data.success) {
+      poems.value = res.data.data.works || []
+      total.value = res.data.data.total || 0
     }
-  } catch (e) {
-    console.error('加载诗词失败:', e)
+  } catch (error) {
+    console.error('Failed to fetch poems:', error)
   } finally {
     loading.value = false
   }
@@ -171,16 +193,25 @@ const loadPoems = async () => {
 const selectCategory = (categoryId) => {
   selectedCategory.value = categoryId
   currentPage.value = 1
-  loadPoems()
+  fetchPoems()
 }
 
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
-    loadPoems()
+    fetchPoems()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 }
+
+onMounted(() => {
+  // 检查 URL 参数是否有分类
+  const category = route.query.category
+  if (category) {
+    selectedCategory.value = category
+  }
+  fetchPoems()
+})
 </script>
 
 <style scoped>
