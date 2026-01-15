@@ -13,15 +13,20 @@ type PoetryRepository struct {
 	db *gorm.DB
 }
 
+// DB 获取数据库连接
+func (r *PoetryRepository) DB() *gorm.DB {
+	return r.db
+}
+
 // NewPoetryRepository 创建诗词仓库
-func NewPoetryRepository(dbPath string) (*PoetryRepository, error) {
+func NewPoetryRepository(dbPath string) (*PoetryRepository, *gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &PoetryRepository{db: db}, nil
+	return &PoetryRepository{db: db}, db, nil
 }
 
 // GetPoems 获取诗词列表（分页）

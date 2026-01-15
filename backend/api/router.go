@@ -2,15 +2,22 @@ package api
 
 import (
 	"poem/backend/api/handlers"
+	"poem/backend/api/handlers/v2"
 	"poem/backend/api/middleware"
+	apiv2 "poem/backend/api/v2"
+	"poem/backend/pkg/auth"
+	"poem/backend/repository"
 	"poem/backend/services"
+	"poem/backend/services/user"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // SetupRouter 设置路由
-func SetupRouter(poetryService *services.PoetryService) *gin.Engine {
+func SetupRouter(poetryService *services.PoetryService, db *gorm.DB) *gin.Engine {
 	router := gin.Default()
 
 	// 使用中间件
@@ -18,6 +25,12 @@ func SetupRouter(poetryService *services.PoetryService) *gin.Engine {
 
 	// 创建处理器
 	poetryHandler := handlers.NewPoetryHandler(poetryService)
+
+	// 初始化用户模块
+	jwtManager := auth.NewJWTManager("your-secret-key-change-in-production", 7*24*time.Hour)
+	userRepo, _ := repository.NewUserRepository(db)
+	userService := user.NewUserService(userRepo, jwtManager)
+	userHandler := v2.NewUserHandler(userService)
 
 	// API v1 路由组
 	v1 := router.Group("/api/v1")
@@ -39,6 +52,11 @@ func SetupRouter(poetryService *services.PoetryService) *gin.Engine {
 		// 搜索
 		v1.GET("/search", poetryHandler.Search)
 	}
+
+	// API v2 路由组
+	v2Router := apiv2.NewRouter(userHandler, jwtManager)
+	v2 := router.Group("/api/v2")
+	v2Router.SetupRoutes(v2)
 
 	// 静态文件服务 - 前端构建产物
 	router.Static("/assets", "../frontend/dist/assets")

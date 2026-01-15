@@ -18,7 +18,7 @@ func main() {
 	log.Printf("运行环境: %s", cfg.Env)
 
 	// 初始化Repository层
-	poetryRepo, err := repository.NewPoetryRepository(cfg.DBPath)
+	poetryRepo, db, err := repository.NewPoetryRepository(cfg.DBPath)
 	if err != nil {
 		log.Fatal("初始化数据库失败:", err)
 	}
@@ -27,12 +27,13 @@ func main() {
 	poetryService := services.NewPoetryService(poetryRepo)
 
 	// 设置路由
-	router := api.SetupRouter(poetryService)
+	router := api.SetupRouter(poetryService, db)
 
 	// 启动服务器
 	addr := ":" + cfg.Port
 	log.Printf("服务器启动在 http://localhost%s", addr)
 	log.Printf("API文档: http://localhost%s/api/v1", addr)
+	log.Printf("API v2: http://localhost%s/api/v2", addr)
 
 	if err := router.Run(addr); err != nil {
 		log.Fatal("服务器启动失败:", err)

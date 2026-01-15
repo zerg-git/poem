@@ -12,6 +12,26 @@
           <router-link to="/authors" class="nav-link">诗人</router-link>
           <router-link to="/search" class="nav-link">搜索</router-link>
         </div>
+        <!-- 用户导航区域 -->
+        <div class="nav-user">
+          <!-- 未登录：显示登录按钮 -->
+          <router-link v-if="!isAuthenticated" to="/login" class="nav-login-btn">
+            登录/注册
+          </router-link>
+
+          <!-- 已登录：显示用户信息和下拉菜单 -->
+          <div v-else class="user-dropdown">
+            <div class="user-trigger" @click="toggleDropdown">
+              <span class="user-name">{{ currentUser?.nickname || currentUser?.username }}</span>
+              <span class="dropdown-arrow">▼</span>
+            </div>
+            <div v-if="showDropdown" class="dropdown-menu">
+              <router-link to="/profile" class="dropdown-item" @click="showDropdown = false">个人中心</router-link>
+              <div class="dropdown-divider"></div>
+              <a @click="handleLogout" class="dropdown-item">退出登录</a>
+            </div>
+          </div>
+        </div>
       </div>
     </nav>
 
@@ -31,11 +51,19 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { poetryAPI } from '@/api/poetry-api'
 import { usePoetryStore } from '@/stores/poetry'
+import { useUserStore } from '@/stores/user'
 
+const router = useRouter()
 const poetryStore = usePoetryStore()
+const userStore = useUserStore()
+const showDropdown = ref(false)
+
+const isAuthenticated = computed(() => userStore.isAuthenticated)
+const currentUser = computed(() => userStore.currentUser)
 
 onMounted(async () => {
   // 预加载朝代和分类数据
@@ -55,7 +83,30 @@ onMounted(async () => {
   } catch (e) {
     console.error('预加载数据失败:', e)
   }
+
+  // 添加点击外部关闭下拉菜单的事件监听
+  document.addEventListener('click', handleClickOutside)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+function toggleDropdown() {
+  showDropdown.value = !showDropdown.value
+}
+
+function handleLogout() {
+  userStore.clearAuth()
+  showDropdown.value = false
+  router.push('/')
+}
+
+function handleClickOutside(event) {
+  if (!event.target.closest('.user-dropdown')) {
+    showDropdown.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -96,6 +147,87 @@ onMounted(async () => {
   color: var(--cinnabar);
 }
 
+/* 用户导航样式 */
+.nav-user {
+  display: flex;
+  align-items: center;
+}
+
+.nav-login-btn {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.nav-login-btn:hover {
+  opacity: 0.9;
+}
+
+.user-dropdown {
+  position: relative;
+}
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 20px;
+  background: #f5f5f5;
+  transition: background 0.2s;
+}
+
+.user-trigger:hover {
+  background: #eee;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #333;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  color: #666;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  overflow: hidden;
+  z-index: 200;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 16px;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #eee;
+  margin: 0;
+}
+
 main {
   min-height: calc(100vh - 140px);
 }
@@ -115,12 +247,21 @@ main {
 
 @media (max-width: 640px) {
   .navbar .container {
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 1rem;
   }
 
   .nav-links {
     gap: 1rem;
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-user {
+    order: 3;
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
