@@ -78,9 +78,12 @@ var (
 	cacheMutex  sync.RWMutex
 )
 
-func main() {
+func runETL() {
 	// 1. 初始化数据库
-	dbPath := "../../../poems.db"
+	dbPath := getDBPath("poems.db")
+
+	fmt.Printf("Using database: %s\n", dbPath)
+
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -96,20 +99,27 @@ func main() {
 	}
 
 	// 2. 确定数据目录
-	possiblePaths := []string{
-		"d:\\demo\\poem\\chinese-poetry",
-		"d:\\demo\\poem\\chinese-poetry-master",
-		"../../../chinese-poetry",
-		"../../../chinese-poetry-master",
-		"chinese-poetry",
-		"chinese-poetry-master",
-	}
+	root := findProjectRoot()
+	rootDir := filepath.Join(root, "chinese-poetry")
 
-	rootDir := ""
-	for _, p := range possiblePaths {
-		if _, err := os.Stat(p); err == nil {
-			rootDir = p
-			break
+	if _, err := os.Stat(rootDir); err != nil {
+		// Fallback search
+		possiblePaths := []string{
+			"d:\\demo\\poem\\chinese-poetry",
+			"d:\\demo\\poem\\chinese-poetry-master",
+			"../../../chinese-poetry",
+			"../../../chinese-poetry-master",
+			"chinese-poetry",
+			"chinese-poetry-master",
+			"../../chinese-poetry", // Relative to backend/cmd/manage
+		}
+
+		rootDir = ""
+		for _, p := range possiblePaths {
+			if _, err := os.Stat(p); err == nil {
+				rootDir = p
+				break
+			}
 		}
 	}
 
