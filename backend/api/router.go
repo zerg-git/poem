@@ -2,7 +2,7 @@ package api
 
 import (
 	"poem/backend/api/handlers"
-	"poem/backend/api/handlers/v2"
+	v2 "poem/backend/api/handlers/v2"
 	"poem/backend/api/middleware"
 	apiv2 "poem/backend/api/v2"
 	"poem/backend/pkg/auth"
@@ -60,7 +60,7 @@ func SetupRouter(poetryService *services.PoetryService, db *gorm.DB) *gin.Engine
 
 	// 静态文件服务 - 前端构建产物
 	router.Static("/assets", "../frontend/dist/assets")
-	router.StaticFile("/favicon.ico", "../frontend/dist/favicon.ico")
+	router.StaticFile("/favicon.svg", "../frontend/dist/favicon.svg")
 
 	// SPA 前端路由支持
 	router.NoRoute(func(c *gin.Context) {
