@@ -6,7 +6,6 @@ poems.db
 
 # Go
 backend/bin
-backend/pkg
 backend/*.exe
 backend/*.exe~
 backend/*.dll
